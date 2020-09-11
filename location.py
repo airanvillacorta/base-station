@@ -214,7 +214,7 @@ def compose2rvecs(rvec1,rvec2):
 ###########################################################################################
 # Pose resolution functions
 # getPose: get the pose from on board sensor for fixed markers and marker geometric info
-# projectPose: given a 3D rotation gets the resulting rotion angle of the z axis in xy, zx o yz planes (RHS)
+# projectPoseZX: given a 3D rotation gets the resulting rotion angle of the z axis in xy, zx o yz planes (RHS)
 # printPose: Pretty-print of on board sensor information for fixed marker 
 
 def getPose(rvecp, tp, rvecMarker, tMarker):
@@ -236,25 +236,26 @@ def getPose(rvecp, tp, rvecMarker, tMarker):
     # R: rotation matrix equivalent to rvec
     RMarker=rfromrvec(rvecMarker)
     Rp=rfromrvec(rvecp)
-    Rinv=np.matmul(RMarker,Rp.transpose())
+    #Rinv=np.matmul(RMarker,Rp.transpose())
+    Rinv=np.matmul(RMarker.transpose(),Rp)
     t=np.matmul(Rinv,tp)
     tc=tMarker-t
     R=Rinv.transpose()
     rvec = rvecfromr(R)
     return (rvec,tc,R)
 
-def projectPose(rvec,ind1,ind2):
-    # theta=projectPose(rvec,ind1,ind2)
+def projectPoseZX(rvec):
+    # theta=projectPoseZX(rvec)
     # rvec: Rodrigues vector representing a geometric rotation.
-    # ind1, ind2: indexes of axis used to define the projection plane.
     # theta: The projected angle between the rotated 2D vector and the original z axis 
-    # Example: ind1 = 2 (z axis), ind2 = 0 (x axis), theta is the rotation angle in the zx plane
     # of the rotated z axis.
     # theta is given normalized between 0 and 2 pi.
     R=rfromrvec(rvec)
     k=np.array([0.0,0.0,1.0]) # z unitary vector
     k.shape=(3,1)
-    kp=np.matmul(R,k)
+    kp=np.matmul(R.transpose(),k)
+    ind1=2
+    ind2=0
     #Special cases
     if(kp[ind2]==0 and kp[ind1]>0):
         return 0.0
@@ -295,7 +296,7 @@ def printPose(rv2,tv2,rvec1,tvec1):
     print("==========================================")
     print("Rotation: Angle: "+str(angle)+" Axis: "+str(axis))
     print("Displacement: " + str(tvec3))
-    theta=projectPose(rvec3,2,0)
+    theta=projectPoseZX(rvec3)
     print("ZX Plane Projected angle: "+str(theta))
     ####################################################
 
